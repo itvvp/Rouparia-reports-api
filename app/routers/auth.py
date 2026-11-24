@@ -82,6 +82,11 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
     return {"message": "Sessão encerrada."}
 
 
+@router.get("/users", response_model=list[UserOut])
+def list_users(_: User = Depends(require_roles("superuser")), db: Session = Depends(get_db)):
+    return db.scalars(select(User).order_by(User.name)).all()
+
+
 @router.post("/createUser", response_model=UserOut, status_code=201, dependencies=[Depends(trusted_origin)])
 def create_user(data: UserCreate, actor: User = Depends(require_roles("admin", "superuser")), db: Session = Depends(get_db)):
     if data.role != "user" and actor.role != "superuser":

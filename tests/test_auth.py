@@ -94,6 +94,15 @@ def test_create_user_rules(client):
     assert client.post("/auth/createUser", json={**new, "email": "a2@x.pt", "role": "admin"}, headers=ORIGIN).status_code == 201
 
 
+def test_only_superuser_lists_users(client):
+    for email in ("us@x.pt", "ad@x.pt"):
+        login(client, email)
+        assert client.get("/auth/users").status_code == 403
+    login(client, "su@x.pt")
+    r = client.get("/auth/users")
+    assert r.status_code == 200 and {"us@x.pt", "ad@x.pt", "su@x.pt"} <= {u["email"] for u in r.json()}
+
+
 def test_access_token_dies_with_its_session(client):
     login(client)
     token = client.cookies.get("access_token")
